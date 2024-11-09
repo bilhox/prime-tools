@@ -146,32 +146,33 @@ void BI_setValueFromString(BigInt* numA , const char * str){
         int power = (int) (LOG(BIGINT_BASE, 16));
         numA->num_digits = strlen(str) / power + 1; // Maybe here strlen can return 0, needs checks
         int residu = strlen(str) % power;
-        // printf("%d %d %zu\n", power, residu, strlen(str));
 
-        size_t i = 0;
-        size_t numI = 0;
-        unsigned int * A = numA->digits;
+        long long i = (long long) strlen(str) - 1; // str iterator
+        unsigned int * it = numA->digits; // bigint interator
 
-        *A = 0;
+        while (i + 1 > residu){
 
-        for (int k = 0; k < residu; k++){
-            *A += (unsigned int) _hextoint(*(str + strlen(str) - 1 - k)) * pow(16, k);
-        }
+            *(it) = 0;
 
-        if (residu != 0)
-            i += residu;
-
-        while (i < strlen(str)){
-
-            *(A + numI) = 0;
+            unsigned int s = 0;
 
             for (int j = 0; j < power; j++){
-                const char * digit = str + strlen(str) - i - j - 1;
-                *(A + numI) += (unsigned int) (_hextoint(*digit) * pow(16, j));
+                const char * digit = str + i - j;
+                s += (unsigned int) (_hextoint(*digit) * pow(16, j));
             }
 
-            i += power;
-            numI++;
+            *it = s;
+
+            i -= power;
+            it++;
+        }
+
+        if (residu != 0) {
+            *it = 0;
+
+            for (int k = 0; k < residu; k++){
+                *it += (unsigned int) _hextoint(*(str + i - k)) * pow(16, k);
+            }
         }
     }
 
@@ -302,11 +303,17 @@ int BI_subBigIntIP(BigInt * numA, const BigInt * numB){
 }
 
 void BI_modBigIntIP(BigInt * numA, const BigInt* numB){
-
+    
     BigInt * temp_res = BI_construct(0);
     const unsigned int * B = numB->digits;
     unsigned int * A = numA->digits;
     long long skipped_digits = 0;
+
+    // printf("Number temp_res : ");
+    // for (int m = 0; m < temp_res->num_digits; m++){
+    //     printf("%d ", *(temp_res->digits + temp_res->num_digits - m - 1));
+    // }
+    // printf("\n");
 
     while(BI_compare(numA, numB) != BI_LESS){
 

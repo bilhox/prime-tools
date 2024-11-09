@@ -66,20 +66,21 @@ int lucas_heimer(unsigned long long p){
 
 int main(int argc, char * argv[]){
 
-    for (size_t p = 13; p <= 13; p++){
-        if(lucas_heimer(p)){
-            printf("Mersenne number 2^%zu is prime\n", p);
-        }
-    }
+    // for (size_t p = 13; p <= 13; p++){
+    //     if(lucas_heimer(p)){
+    //         printf("Mersenne number 2^%zu is prime\n", p);
+    //     }
+    // }
+
+    printf("huh");
 
     BigInt * foo = BI_construct(0);
     BigInt * foo2 = BI_construct(0);
 
     BI_setValueFromString(foo, "16D7422");
     BI_setValueFromString(foo2, "20FF");
-    for (int m = 0; m < foo->num_digits; m++){
-        printf("%d\n", *(foo->digits + foo2->num_digits - m - 1));
-    }
+
+    BI_modBigIntIP(foo, foo2);
 
     return 0;
 }
