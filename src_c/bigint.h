@@ -9,6 +9,13 @@
 #define BIGINT_SIZE 1024
 #define BIGINT_BASE 256
 
+#define PRINT_BI(bi)\
+    printf("Number temp_res : ");\
+    for (int m = 0; m < bi->num_digits; m++){\
+        printf("%d ", *(bi->digits + bi->num_digits - m - 1));\
+    }\
+    printf("\n");\
+
 typedef struct {
     unsigned int * digits;
     size_t num_digits;

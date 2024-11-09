@@ -6,8 +6,8 @@
 #include <math.h>
 #include "bigint.h"
 
-#define MAX(a, b) (a < b) ? b : a
-#define MOD(a, b) (a + b) % b
+#define MAX(a, b) ((a) < (b)) ? b : a
+#define MOD(a, b) ((a) + (b)) % b
 #define LOG(a, b) log(a)/log(b)
 
 static int
@@ -144,8 +144,12 @@ void BI_setValueFromString(BigInt* numA , const char * str){
     } else if (BIGINT_BASE != 0 && (BIGINT_BASE & (BIGINT_BASE - 1)) == 0){
 
         int power = (int) (LOG(BIGINT_BASE, 16));
-        numA->num_digits = strlen(str) / power + 1; // Maybe here strlen can return 0, needs checks
+        numA->num_digits = strlen(str) / power; // Maybe here strlen can return 0, needs checks
         int residu = strlen(str) % power;
+
+        if (residu != 0){
+            numA->num_digits += 1;
+        }
 
         long long i = (long long) strlen(str) - 1; // str iterator
         unsigned int * it = numA->digits; // bigint interator
@@ -272,6 +276,8 @@ int BI_subBigIntIP(BigInt * numA, const BigInt * numB){
     unsigned int * A = numA->digits;
     const unsigned int * B = numB->digits;
 
+    // PRINT_BI(numA);
+
     if (BI_compare(numA, numB) == BI_LESS)
         return -1;
 
@@ -280,7 +286,7 @@ int BI_subBigIntIP(BigInt * numA, const BigInt * numB){
 
     for (size_t i = 0; i < imax; i++){
         unsigned int * a = A + i;
-        unsigned int res = 0;
+        int res = 0;
 
         if (i >= numB->num_digits){
             res = MOD(*a - ret, BIGINT_BASE);
@@ -288,7 +294,7 @@ int BI_subBigIntIP(BigInt * numA, const BigInt * numB){
         } else {
             const unsigned int b = B[i];
             res = MOD(*a - b - ret, BIGINT_BASE);
-            ret = (*a - b - ret) < 0;
+            ret = (int) ( *a - b - ret) < 0;
         }
         *a = res;
     }
@@ -308,12 +314,6 @@ void BI_modBigIntIP(BigInt * numA, const BigInt* numB){
     const unsigned int * B = numB->digits;
     unsigned int * A = numA->digits;
     long long skipped_digits = 0;
-
-    // printf("Number temp_res : ");
-    // for (int m = 0; m < temp_res->num_digits; m++){
-    //     printf("%d ", *(temp_res->digits + temp_res->num_digits - m - 1));
-    // }
-    // printf("\n");
 
     while(BI_compare(numA, numB) != BI_LESS){
 

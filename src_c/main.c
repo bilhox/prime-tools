@@ -35,16 +35,10 @@ int lucas_heimer(unsigned long long p){
         // printf("powering\n");
         BI_power(temp_res, S, 2);
         // printf("loop\n");
-        // for (int m = 0; m < temp_res->num_digits; m++){
-        //     printf("%d\n", *(temp_res->digits + temp_res->num_digits - m - 1));
-        // }
         // printf("copying\n");
         BI_copyIP(S, temp_res);
         // printf("subtracting\n");
         BI_subBigIntIP(S, C2);
-        // for (int m = 0; m < S->num_digits; m++){
-        //     printf("%d\n", *(S->digits + S->num_digits - m - 1));
-        // }
         // printf("modulo\n");
         BI_modBigIntIP(S, Mp);
         // printf("end modulo\n");
@@ -66,21 +60,11 @@ int lucas_heimer(unsigned long long p){
 
 int main(int argc, char * argv[]){
 
-    // for (size_t p = 13; p <= 13; p++){
-    //     if(lucas_heimer(p)){
-    //         printf("Mersenne number 2^%zu is prime\n", p);
-    //     }
-    // }
-
-    printf("huh");
-
-    BigInt * foo = BI_construct(0);
-    BigInt * foo2 = BI_construct(0);
-
-    BI_setValueFromString(foo, "16D7422");
-    BI_setValueFromString(foo2, "20FF");
-
-    BI_modBigIntIP(foo, foo2);
+    for (size_t p = 3; p <= 200; p++){
+        if(lucas_heimer(p)){
+            printf("Mersenne number 2^%zu is prime\n", p);
+        }
+    }
 
     return 0;
 }
