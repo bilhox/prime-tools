@@ -60,7 +60,8 @@ int lucas_heimer(unsigned long long p){
 
 int main(int argc, char * argv[]){
 
-    for (size_t p = 3; p <= 200; p++){
+    for (size_t p = 3; p <= 400; p++){
+        printf("checking for %zu\n", p);
         if(lucas_heimer(p)){
             printf("Mersenne number 2^%zu is prime\n", p);
         }

@@ -290,7 +290,7 @@ int BI_subBigIntIP(BigInt * numA, const BigInt * numB){
 
         if (i >= numB->num_digits){
             res = MOD(*a - ret, BIGINT_BASE);
-            ret = (*a - ret) < 0;
+            ret = (int) (*a - ret) < 0;
         } else {
             const unsigned int b = B[i];
             res = MOD(*a - b - ret, BIGINT_BASE);

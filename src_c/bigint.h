@@ -7,7 +7,7 @@
 #ifdef BIGINT_H
 
 #define BIGINT_SIZE 1024
-#define BIGINT_BASE 256
+#define BIGINT_BASE 16
 
 #define PRINT_BI(bi)\
     printf("Number temp_res : ");\
