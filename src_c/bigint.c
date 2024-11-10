@@ -292,9 +292,9 @@ int BI_subBigIntIP(BigInt * numA, const BigInt * numB){
         return -1;
 
     int ret = 0;
-    size_t imax = numA->num_digits;
+    size_t imax = numB->num_digits;
 
-    for (size_t i = 0; i < imax; i++){
+    for (size_t i = 0; i < imax || ret != 0; i++){
         unsigned int * a = A + i;
         int res = 0;
 
@@ -355,9 +355,9 @@ void BI_modBigInt(BigInt * numR, const BigInt * numA, const BigInt* numB){
     unsigned int * R = numR->digits;
     long long skipped_digits = 0;
 
-    while(BI_compare(numA, numB) != BI_LESS){
+    while(BI_compare(numR, numB) != BI_LESS){
 
-        if (numB->num_digits < numA->num_digits){
+        if (numB->num_digits < numR->num_digits){
             skipped_digits = 0;
             unsigned int last_digit_R = R[numR->num_digits - 1]; 
             unsigned int last_digit_B = B[numB->num_digits - 1]; 
@@ -380,6 +380,8 @@ void BI_modBigInt(BigInt * numR, const BigInt * numA, const BigInt* numB){
 }
 
 void BI_addNumberIP(BigInt * numA, const unsigned long long n){
+
+    // needs optimization, no need for new BI
 
     BigInt * numB = BI_construct(n);
 
@@ -557,12 +559,13 @@ void BI_print(const BigInt * numA){
     }
     fputc('\n', stdout);
 }
+#endif
 
 void BI_free(BigInt * numA){
     free(numA->digits);
     free(numA);
 }
-#endif
+
 
 BI_COMPARISON BI_compare(const BigInt* numA, const BigInt* numB){
 
