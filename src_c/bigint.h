@@ -28,6 +28,7 @@ typedef enum {
 } BI_COMPARISON;
 
 int BI_init();
+int BI_quit();
 
 BigInt* BI_construct(unsigned long long value);
 BigInt* BI_fromPoweredNumber(unsigned int numA, unsigned long long n);
@@ -56,7 +57,7 @@ void BI_power(BigInt * numR, BigInt const * const numA, unsigned long long n);
 
 void BI_shiftDigitsLeftIP(BigInt* numA, size_t s);
 
-void BI_print(const BigInt * numA);
+// void BI_print(const BigInt * numA);
 
 void BI_free(BigInt * numA);
 
