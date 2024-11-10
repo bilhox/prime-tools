@@ -20,9 +20,10 @@ int lucas_heimer(unsigned long long p){
     BigInt * C2 = BI_construct(2);
     BigInt * C1 = BI_construct(1);
     BigInt * C0 = BI_construct(0);
-
     BigInt * Mp = BI_fromPoweredNumber(2, p);
     BI_subBigIntIP(Mp, C1);
+    // printf("%zu\n", Mp->num_digits);
+    // PRINT_BI(Mp);
 
     BigInt * S = BI_construct(4);
 
@@ -32,11 +33,11 @@ int lucas_heimer(unsigned long long p){
     BigInt * temp_res = BI_construct(0);
 
     do {
+        // printf("loop %zu\n", i);
         // printf("powering\n");
         BI_power(temp_res, S, 2);
-        // printf("loop\n");
         // printf("copying\n");
-        BI_copyIP(S, temp_res);
+        BI_copy(S, temp_res);
         // printf("subtracting\n");
         BI_subBigIntIP(S, C2);
         // printf("modulo\n");
@@ -60,12 +61,15 @@ int lucas_heimer(unsigned long long p){
 
 int main(int argc, char * argv[]){
 
-    for (size_t p = 3; p <= 400; p++){
-        printf("checking for %zu\n", p);
+    BI_init();
+
+    for (size_t p = 3; p <= 500; p++){
         if(lucas_heimer(p)){
             printf("Mersenne number 2^%zu is prime\n", p);
         }
     }
+
+    printf("Program ended without problem\n");
 
     return 0;
 }

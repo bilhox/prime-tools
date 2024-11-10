@@ -5,3 +5,5 @@
 .xmake
 
 build
+
+callgrind.out.**

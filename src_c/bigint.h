@@ -27,14 +27,15 @@ typedef enum {
     BI_GREATER
 } BI_COMPARISON;
 
+int BI_init();
+
 BigInt* BI_construct(unsigned long long value);
 BigInt* BI_fromPoweredNumber(unsigned int numA, unsigned long long n);
 BigInt* BI_fromString(const char * str);
 
 void BI_setValueFromString(BigInt* numA , const char * str);
 
-BigInt* BI_copy(const BigInt* numA);
-void BI_copyIP(BigInt* numA, const BigInt* numB);
+void BI_copy(BigInt* numA, const BigInt* numB);
 
 BI_COMPARISON BI_compare(const BigInt* numA, const BigInt* numB);
 

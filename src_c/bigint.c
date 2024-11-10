@@ -10,10 +10,23 @@
 #define MOD(a, b) ((a) + (b)) % b
 #define LOG(a, b) log(a)/log(b)
 
+static BigInt * num_buffer = NULL;
+static BigInt * num_buffer2 = NULL; // For powering a number, because called functions in these functions already use num_buffer
+
+int BI_init(){
+    num_buffer = BI_construct(0);
+    num_buffer2 = BI_construct(0);
+
+    if (num_buffer == NULL)
+        return -1;
+
+    return 0;
+}
+
 static int
 _hextoint(char val)
 {
-    /* 'hex' is a two digit hexadecimal number, no spaces, no signs.
+    /* 'hex' is a one digit hexadecimal number, no spaces, no signs.
      * This algorithm is brute force, but it is character system agnostic.
      * It is definitely not a general purpose solution.
      */
@@ -182,18 +195,7 @@ void BI_setValueFromString(BigInt* numA , const char * str){
 
 }
 
-BigInt* BI_copy(const BigInt* numA){
-    
-    BigInt * copy = BI_construct(0);
-
-    memcpy(copy->digits, numA->digits, numA->num_digits * sizeof(unsigned int));
-
-    copy->num_digits = numA->num_digits;
-
-    return copy;
-}
-
-void BI_copyIP(BigInt* numA, const BigInt* numB){
+void BI_copy(BigInt* numA, const BigInt* numB){
 
     memcpy(numA->digits, numB->digits, numB->num_digits * sizeof(unsigned int));
 
@@ -310,7 +312,6 @@ int BI_subBigIntIP(BigInt * numA, const BigInt * numB){
 
 void BI_modBigIntIP(BigInt * numA, const BigInt* numB){
     
-    BigInt * temp_res = BI_construct(0);
     const unsigned int * B = numB->digits;
     unsigned int * A = numA->digits;
     long long skipped_digits = 0;
@@ -321,7 +322,7 @@ void BI_modBigIntIP(BigInt * numA, const BigInt* numB){
             skipped_digits = 0;
             unsigned int last_digit_A = A[numA->num_digits - 1]; 
             unsigned int last_digit_B = B[numB->num_digits - 1]; 
-            BI_copyIP(temp_res, numB);
+            BI_copy(num_buffer, numB);
 
             if (last_digit_A > last_digit_B)
                 skipped_digits = numA->num_digits - numB->num_digits;
@@ -329,22 +330,19 @@ void BI_modBigIntIP(BigInt * numA, const BigInt* numB){
                 skipped_digits = numA->num_digits - numB->num_digits - 1;
             
             skipped_digits = MAX(0, skipped_digits);
-            BI_shiftDigitsLeftIP(temp_res, (size_t) skipped_digits);
-            BI_subBigIntIP(numA, temp_res);
+            BI_shiftDigitsLeftIP(num_buffer, (size_t) skipped_digits);
+            BI_subBigIntIP(numA, num_buffer);
 
         } else {
             BI_subBigIntIP(numA, numB);
         }
     }
-
-    BI_free(temp_res);
 }
 
 void BI_modBigInt(BigInt * numR, const BigInt * numA, const BigInt* numB){
 
-    BI_copyIP(numR, numA);
+    BI_copy(numR, numA);
 
-    BigInt * temp_res = BI_construct(0);
     const unsigned int * B = numB->digits;
     unsigned int * R = numR->digits;
     long long skipped_digits = 0;
@@ -355,7 +353,7 @@ void BI_modBigInt(BigInt * numR, const BigInt * numA, const BigInt* numB){
             skipped_digits = 0;
             unsigned int last_digit_R = R[numR->num_digits - 1]; 
             unsigned int last_digit_B = B[numB->num_digits - 1]; 
-            BI_copyIP(temp_res, numB);
+            BI_copy(num_buffer, numB);
 
             if (last_digit_R > last_digit_B)
                 skipped_digits = numR->num_digits - numB->num_digits;
@@ -363,15 +361,14 @@ void BI_modBigInt(BigInt * numR, const BigInt * numA, const BigInt* numB){
                 skipped_digits = numR->num_digits - numB->num_digits - 1;
             
             skipped_digits = MAX(0, skipped_digits);
-            BI_shiftDigitsLeftIP(temp_res, (size_t) skipped_digits);
-            BI_subBigIntIP(numR, temp_res);
+            BI_shiftDigitsLeftIP(num_buffer, (size_t) skipped_digits);
+            BI_subBigIntIP(numR, num_buffer);
 
         } else {
             BI_subBigIntIP(numR, numB);
         }
     }
 
-    BI_free(temp_res);
 }
 
 void BI_addNumberIP(BigInt * numA, const unsigned long long n){
@@ -414,13 +411,8 @@ void BI_shiftDigitsLeftIP(BigInt* numA, size_t s){
         return;
     }
 
-    for (size_t i = numA->num_digits + s - 1; i >= s; i--){
-        *(numA->digits + i) = *(numA->digits + i - s);
-    }
-
-    for (size_t j = 0; j < s; j++){
-        numA->digits[j] = 0;
-    }
+    memmove(numA->digits + s, numA->digits, numA->num_digits * sizeof(unsigned int));
+    memset(numA->digits, 0, s * sizeof(unsigned int)); // Needs better protection, as it can set memory to 0 outside the buffer
 
     numA->num_digits += s;
 }
@@ -430,22 +422,17 @@ void BI_multiplyByBI(BigInt * numR, const BigInt * numA, const BigInt * numB){
     const unsigned int * A = numA->digits;
     const unsigned int * B = numB->digits;
 
-    BigInt * intermediate_result = BI_construct(0);
-
     BI_setValueFromString(numR, "0");
 
     for (size_t i = 0; i < numB->num_digits; i++){
         const unsigned int multiplier = numB->digits[i];
 
-        BI_multiplyByNumber(intermediate_result, numA, multiplier);
+        BI_multiplyByNumber(num_buffer, numA, multiplier);
 
-        BI_shiftDigitsLeftIP(intermediate_result, i);
+        BI_shiftDigitsLeftIP(num_buffer, i);
 
-        BI_addBigIntIP(numR, intermediate_result);
-        // BI_print(intermediate_result);
+        BI_addBigIntIP(numR, num_buffer);
     }
-
-    BI_free(intermediate_result);
 
 }
 
@@ -471,11 +458,11 @@ void BI_power(BigInt* numR, BigInt const * const numA, unsigned long long n){
     BI_setValueFromString(numR, "1");
     // printf("%zu\n", numR->num_digits);
 
-    BigInt* intermediate_result = BI_construct(1);
+    BI_setValueFromString(num_buffer2, "1");
 
     while(n--){
-        BI_multiplyByBI(intermediate_result, numR, numA);
-        BI_copyIP(numR, intermediate_result);
+        BI_multiplyByBI(num_buffer2, numR, numA);
+        BI_copy(numR, num_buffer2);
     }
 }
 
@@ -485,7 +472,7 @@ void BI_power(BigInt* numR, BigInt const * const numA, unsigned long long n){
 
 //     while(n--){
 //         BigInt* res = BI_multiplyByBI(result, numA);
-//         BI_copyIP(result, res);
+//         BI_copy(result, res);
 //     }
 
 //     return result;
@@ -552,6 +539,7 @@ void BI_multiplyByNumber(BigInt * numR, const BigInt * numA, const unsigned int 
     }
 }
 
+#if BIGINT_BASE == 10
 void BI_print(const BigInt * numA){
 
     unsigned int * digits = numA->digits;
@@ -566,6 +554,7 @@ void BI_free(BigInt * numA){
     free(numA->digits);
     free(numA);
 }
+#endif
 
 BI_COMPARISON BI_compare(const BigInt* numA, const BigInt* numB){
 
