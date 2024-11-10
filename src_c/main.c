@@ -71,5 +71,7 @@ int main(int argc, char * argv[]){
 
     printf("Program ended without problem\n");
 
+    BI_quit();
+
     return 0;
 }

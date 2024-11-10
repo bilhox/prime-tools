@@ -23,6 +23,14 @@ int BI_init(){
     return 0;
 }
 
+int BI_quit(){
+
+    BI_free(num_buffer);
+    BI_free(num_buffer2);
+
+    return 0;
+}
+
 static int
 _hextoint(char val)
 {
