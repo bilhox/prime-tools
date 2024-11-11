@@ -13,6 +13,5 @@ target("GIMPS")
     -- set_symbols("debug")
 
     set_targetdir("build/")
-
     add_files("src_c/**.c")
     add_headerfiles("src_c/**.h")

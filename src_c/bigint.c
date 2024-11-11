@@ -6,24 +6,22 @@
 #include <math.h>
 #include "bigint.h"
 
-#define MAX(a, b) ((a) < (b)) ? b : a
-#define MOD(a, b) ((a) + (b)) % b
-#define LOG(a, b) log(a)/log(b)
-
-static BigInt * num_buffer = NULL;
-static BigInt * num_buffer2 = NULL; // For powering a number, because called functions in these functions already use num_buffer
-
 int BI_init(){
+
+    is_initialized = 1;
+
     num_buffer = BI_construct(0);
     num_buffer2 = BI_construct(0);
 
-    if (num_buffer == NULL)
+    if (num_buffer == NULL || num_buffer2 == NULL)
         return -1;
 
     return 0;
 }
 
 int BI_quit(){
+
+    is_initialized = 0;
 
     BI_free(num_buffer);
     BI_free(num_buffer2);
@@ -93,14 +91,7 @@ _hextoint(char val)
     return new_val;
 }
 
-void BI_setDigitsTo0(BigInt* numA, size_t n){
-    if (n < BIGINT_SIZE){
-        memset(numA->digits, 0, n * sizeof(unsigned int));
-    }
-}
-
 BigInt* BI_construct(unsigned long long value) {
-
 
     if (value < 0)
         return NULL;
@@ -129,29 +120,30 @@ BigInt* BI_construct(unsigned long long value) {
         return NULL;
     }
 
-    unsigned int count = new_big_int->num_digits;
+    size_t count = new_big_int->num_digits;
     unsigned int * digits = new_big_int->digits;
     while(count--) {
         (*digits++) = value % BIGINT_BASE;
         value /= BIGINT_BASE;
     }
 
-    // for (int m = 0; m < new_big_int->num_digits; m++){
-    //     printf("%d\n", *(new_big_int->digits + new_big_int->num_digits - m - 1));
-    // }
-
     return new_big_int;
 }
 
-void BI_setValueFromString(BigInt* numA , const char * str){
+int BI_setValueFromString(BigInt* numA, const char * str){
 
-    // TODO: Find a way to parse any string to any base
+    if (str == NULL || numA == NULL)
+        return -1;
+    
+    if (strlen(str) > BIGINT_SIZE)
+        return -1; // Maybe -2 so the user can understand the string too big
 
     if (BIGINT_BASE == 10) {
         numA->num_digits = strlen(str);
 
         const char * it = str + numA->num_digits - 1;
         unsigned int * digits = numA->digits;
+
         while (it >= str){
             unsigned int digit = *it;
             if (digit < '0' || digit > '9'){
@@ -201,19 +193,32 @@ void BI_setValueFromString(BigInt* numA , const char * str){
         }
     }
 
+    return 0;
 }
 
-void BI_copy(BigInt* numA, const BigInt* numB){
+int BI_copy(BigInt* numA, const BigInt* numB){
+
+    if (numA == NULL || numB == NULL)
+        return -1;
 
     memcpy(numA->digits, numB->digits, numB->num_digits * sizeof(unsigned int));
 
     numA->num_digits = numB->num_digits;
+
+    return 0;
 }
 
 #if BIGINT_BASE == 10
 BigInt* BI_fromString(const char* str){
 
+    // Does not need init check as it doesn't use any buffers
     // TODO: Find a way to parse any string to any base
+
+    if (str == NULL)
+        return NULL;
+
+    if (strlen(str) > BIGINT_SIZE)
+        return NULL;
     
     BigInt * bigInt = malloc(sizeof(BigInt));
 
@@ -246,7 +251,10 @@ BigInt* BI_fromString(const char* str){
 }
 #endif
 
-void BI_addBigIntIP(BigInt * numA, const BigInt * numB){
+int BI_addBigIntIP(BigInt * numA, const BigInt * numB){
+
+    if (numA == NULL || numB == NULL)
+        return -1;
 
     unsigned int * A = numA->digits;
     const unsigned int * B = numB->digits;
@@ -276,12 +284,20 @@ void BI_addBigIntIP(BigInt * numA, const BigInt * numB){
     numA->num_digits = imax;
 
     if (ret != 0){
+        if (numA->num_digits == BIGINT_SIZE - 1)
+            return -1; // I leave the result unfinished, it's to the user to handle it with the returned code
+        
         A[numA->num_digits] = (unsigned int) ret;
         numA->num_digits += 1;
     }
+
+    return 0;
 }
 
 int BI_subBigIntIP(BigInt * numA, const BigInt * numB){
+
+    if (numA == NULL || numB == NULL)
+        return -1;
 
     unsigned int * A = numA->digits;
     const unsigned int * B = numB->digits;
@@ -289,7 +305,7 @@ int BI_subBigIntIP(BigInt * numA, const BigInt * numB){
     // PRINT_BI(numA);
 
     if (BI_compare(numA, numB) == BI_LESS)
-        return -1;
+        return -2;
 
     int ret = 0;
     size_t imax = numB->num_digits;
@@ -310,6 +326,7 @@ int BI_subBigIntIP(BigInt * numA, const BigInt * numB){
     }
 
     unsigned int * it = A + numA->num_digits - 1;
+
     while(*it == 0 && numA->num_digits != 1){
         numA->num_digits--;
         it--;
@@ -318,19 +335,27 @@ int BI_subBigIntIP(BigInt * numA, const BigInt * numB){
     return 0;
 }
 
-void BI_modBigIntIP(BigInt * numA, const BigInt* numB){
+int BI_modBigIntIP(BigInt * numA, const BigInt* numB){
     
+    if (numA == NULL || numB == NULL)
+        return -1;
+    
+    BI_INIT_CHECK(-1)
+
     const unsigned int * B = numB->digits;
     unsigned int * A = numA->digits;
     long long skipped_digits = 0;
+
+    int sub_returned_code = 0;
 
     while(BI_compare(numA, numB) != BI_LESS){
 
         if (numB->num_digits < numA->num_digits){
             skipped_digits = 0;
             unsigned int last_digit_A = A[numA->num_digits - 1]; 
-            unsigned int last_digit_B = B[numB->num_digits - 1]; 
-            BI_copy(num_buffer, numB);
+            unsigned int last_digit_B = B[numB->num_digits - 1];
+
+            RETURN_CODE_CHECK(BI_copy(num_buffer, numB), -1)
 
             if (last_digit_A > last_digit_B)
                 skipped_digits = numA->num_digits - numB->num_digits;
@@ -338,30 +363,43 @@ void BI_modBigIntIP(BigInt * numA, const BigInt* numB){
                 skipped_digits = numA->num_digits - numB->num_digits - 1;
             
             skipped_digits = MAX(0, skipped_digits);
-            BI_shiftDigitsLeftIP(num_buffer, (size_t) skipped_digits);
-            BI_subBigIntIP(numA, num_buffer);
+
+            RETURN_CODE_CHECK(BI_shiftDigitsLeftIP(num_buffer, (size_t) skipped_digits), -1)
+            
+            sub_returned_code = BI_subBigIntIP(numA, num_buffer);
 
         } else {
-            BI_subBigIntIP(numA, numB);
+            sub_returned_code = BI_subBigIntIP(numA, numB);
         }
+
+        if (sub_returned_code == -1)
+            return -1;
     }
+
+    return 0;
 }
 
-void BI_modBigInt(BigInt * numR, const BigInt * numA, const BigInt* numB){
+int BI_modBigInt(BigInt * numR, const BigInt * numA, const BigInt* numB){
 
-    BI_copy(numR, numA);
+    if(BI_copy(numR, numA) == -1)
+        return -1;
+
+    BI_INIT_CHECK(-1)
 
     const unsigned int * B = numB->digits;
     unsigned int * R = numR->digits;
     long long skipped_digits = 0;
 
+    int sub_returned_code = 0;
+
     while(BI_compare(numR, numB) != BI_LESS){
 
         if (numB->num_digits < numR->num_digits){
             skipped_digits = 0;
-            unsigned int last_digit_R = R[numR->num_digits - 1]; 
-            unsigned int last_digit_B = B[numB->num_digits - 1]; 
-            BI_copy(num_buffer, numB);
+            unsigned int last_digit_R = R[numR->num_digits - 1];
+            unsigned int last_digit_B = B[numB->num_digits - 1];
+
+            RETURN_CODE_CHECK(BI_copy(num_buffer, numB), -1)
 
             if (last_digit_R > last_digit_B)
                 skipped_digits = numR->num_digits - numB->num_digits;
@@ -369,21 +407,31 @@ void BI_modBigInt(BigInt * numR, const BigInt * numA, const BigInt* numB){
                 skipped_digits = numR->num_digits - numB->num_digits - 1;
             
             skipped_digits = MAX(0, skipped_digits);
-            BI_shiftDigitsLeftIP(num_buffer, (size_t) skipped_digits);
-            BI_subBigIntIP(numR, num_buffer);
+            
+            RETURN_CODE_CHECK(BI_shiftDigitsLeftIP(num_buffer, (size_t) skipped_digits), -1)
+
+            sub_returned_code = BI_subBigIntIP(numR, num_buffer);
 
         } else {
-            BI_subBigIntIP(numR, numB);
+            sub_returned_code = BI_subBigIntIP(numR, numB);
         }
+
+        if (sub_returned_code == -1)
+            return -1;
     }
+
+    return 0;
 
 }
 
-void BI_addNumberIP(BigInt * numA, const unsigned long long n){
+int BI_addNumberIP(BigInt * numA, const unsigned long long n){
 
     // needs optimization, no need for new BI
 
     BigInt * numB = BI_construct(n);
+
+    if (numB == NULL || numA == NULL)
+        return -1;
 
     unsigned int * A = numA->digits;
     const unsigned int * B = numB->digits;
@@ -404,101 +452,123 @@ void BI_addNumberIP(BigInt * numA, const unsigned long long n){
     numA->num_digits = imax;
 
     if (ret != 0){
+        if (numA->num_digits == BIGINT_SIZE - 1)
+            return -1; // I leave the result unfinished, it's to the user to handle it with the returned code
         A[numA->num_digits] = (unsigned int) ret;
         numA->num_digits += 1;
     }
 
     BI_free(numB);
+
+    return 0;
 }
 
-void BI_shiftDigitsLeftIP(BigInt* numA, size_t s){
+int BI_shiftDigitsLeftIP(BigInt* numA, size_t s){
     
-    if (s == 0)
-        return;
+    if (numA == NULL)
+        return -1;
+
+    if (s == 0 || (numA->num_digits == 1 && numA->digits[0] == 0))
+        return 0;
 
     if (s >= BIGINT_SIZE){
         memset(numA->digits, 0, sizeof(unsigned int) * BIGINT_SIZE);
-        return;
+        return 0;
     }
 
-    memmove(numA->digits + s, numA->digits, numA->num_digits * sizeof(unsigned int));
-    memset(numA->digits, 0, s * sizeof(unsigned int)); // Needs better protection, as it can set memory to 0 outside the buffer
+    size_t digits_to_shift = numA->num_digits;
+    numA->num_digits = MIN(numA->num_digits + s, BIGINT_SIZE);
 
-    numA->num_digits += s;
+    if (digits_to_shift + s > BIGINT_SIZE)
+        digits_to_shift = BIGINT_SIZE - s;
+
+    memmove(numA->digits + s, numA->digits, digits_to_shift * sizeof(unsigned int));
+    memset(numA->digits, 0, s * sizeof(unsigned int));
+
+    return 0;
 }
 
-void BI_multiplyByBI(BigInt * numR, const BigInt * numA, const BigInt * numB){
+int BI_multiplyByBI(BigInt * numR, const BigInt * numA, const BigInt * numB){
+
+    BI_INIT_CHECK(-1)
+
+    if (numA == NULL || numB == NULL || numR == NULL)
+        return -1;
 
     const unsigned int * A = numA->digits;
     const unsigned int * B = numB->digits;
 
-    BI_setValueFromString(numR, "0");
+    RETURN_CODE_CHECK(BI_setValueFromString(numR, "0"), -1);
 
     for (size_t i = 0; i < numB->num_digits; i++){
         const unsigned int multiplier = numB->digits[i];
 
-        BI_multiplyByNumber(num_buffer, numA, multiplier);
+        if (BI_multiplyByNumber(num_buffer, numA, multiplier) == -1)
+            return -1;
 
-        BI_shiftDigitsLeftIP(num_buffer, i);
+        RETURN_CODE_CHECK(BI_shiftDigitsLeftIP(num_buffer, i), -1)
 
-        BI_addBigIntIP(numR, num_buffer);
+        RETURN_CODE_CHECK(BI_addBigIntIP(numR, num_buffer), -1)
     }
 
+    return 0;
 }
 
 BigInt* BI_fromPoweredNumber(unsigned int numA, unsigned long long n){
+
+    BI_INIT_CHECK(NULL)
 
     if (numA > 9 || numA == 0)
         return NULL;
 
     BigInt* result = BI_construct(1);
 
+    if (result == NULL)
+        return NULL;
+
     if (n == 0)
         return result;
 
     while(n--){
-        BI_multiplyByNumberIP(result, numA);
+        if (BI_multiplyByNumberIP(result, numA) == -1)
+            return NULL;
     }
 
     return result;
 }
 
-void BI_power(BigInt* numR, BigInt const * const numA, unsigned long long n){
+int BI_power(BigInt* numR, BigInt const * const numA, unsigned long long n){
 
-    BI_setValueFromString(numR, "1");
-    // printf("%zu\n", numR->num_digits);
+    BI_INIT_CHECK(-1);
 
-    BI_setValueFromString(num_buffer2, "1");
+    if (numA == NULL || numR == NULL)
+        return -1;
+
+    RETURN_CODE_CHECK(BI_setValueFromString(numR, "1"), -1)
+
+    RETURN_CODE_CHECK(BI_setValueFromString(num_buffer2, "1"), -1)
 
     while(n--){
-        BI_multiplyByBI(num_buffer2, numR, numA);
-        BI_copy(numR, num_buffer2);
+        RETURN_CODE_CHECK(BI_multiplyByBI(num_buffer2, numR, numA), -1)
+        RETURN_CODE_CHECK(BI_copy(numR, num_buffer2), -1)
     }
+
+    return 0;
 }
 
-// void BI_powerIP(const BigInt * numA, unsigned long long n){
-    
-//     BigInt* result = BI_construct(1);
+int BI_multiplyByNumberIP(BigInt * numA, const unsigned int B){
 
-//     while(n--){
-//         BigInt* res = BI_multiplyByBI(result, numA);
-//         BI_copy(result, res);
-//     }
-
-//     return result;
-// }
-
-void BI_multiplyByNumberIP(BigInt * numA, const unsigned int B){
+    if (numA == NULL)
+        return -1;
 
     unsigned int * A = numA->digits;
 
     if (B == 0){
-        for (size_t i = 0; i < numA->num_digits; i++){
-            A[i] = 0;
-        }
 
-        numA->num_digits = 0;
-        return;
+        numA->digits[0] = 0;
+        numA->num_digits = 1;
+
+        return 0;
     }
 
     int ret = 0;
@@ -513,20 +583,27 @@ void BI_multiplyByNumberIP(BigInt * numA, const unsigned int B){
 
     while (ret != 0){
         A[numA->num_digits] = (unsigned int) ret;
+        if (numA->num_digits == BIGINT_SIZE)
+            return -1;
+
         numA->num_digits += 1;
         ret /= BIGINT_BASE;
     }
+
+    return 0;
 }
 
-// Au lieu de recréer une instance à chaque function call, prendre en argument un BigInt de destination
+int BI_multiplyByNumber(BigInt * numR, const BigInt * numA, const unsigned int B){
 
-void BI_multiplyByNumber(BigInt * numR, const BigInt * numA, const unsigned int B){
+    if (numR == NULL || numA == NULL)
+        return -1;
 
     const unsigned int * A = numA->digits;
 
     if (B == 0){
-        BI_setValueFromString(numR, "0");
-        return;
+        numR->digits[0] = 0;
+        numR->num_digits = 1;
+        return 0;
     }
 
     numR->num_digits = numA->num_digits;
@@ -544,13 +621,23 @@ void BI_multiplyByNumber(BigInt * numR, const BigInt * numA, const unsigned int 
 
     while (ret != 0){
         numR->digits[numA->num_digits] = (unsigned int) ret;
+        if (numR->num_digits == BIGINT_SIZE)
+            return -1;
+
         numR->num_digits += 1;
         ret /= BIGINT_BASE;
     }
+
+    return 0;
 }
 
 #if BIGINT_BASE == 10
 void BI_print(const BigInt * numA){
+
+    if (numA == NULL){
+        printf("NULL\n");
+        return;
+    }
 
     unsigned int * digits = numA->digits;
 
@@ -568,6 +655,9 @@ void BI_free(BigInt * numA){
 
 
 BI_COMPARISON BI_compare(const BigInt* numA, const BigInt* numB){
+
+    if (numA == NULL || numB == NULL)
+        return BI_UNKNOWN;
 
     const unsigned int * A = numA->digits;
     const unsigned int * B = numB->digits;
