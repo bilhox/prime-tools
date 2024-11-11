@@ -214,7 +214,7 @@ void BI_copy(BigInt* numA, const BigInt* numB){
 BigInt* BI_fromString(const char* str){
 
     // TODO: Find a way to parse any string to any base
-    
+
     BigInt * bigInt = malloc(sizeof(BigInt));
 
     if (!bigInt)
@@ -319,7 +319,7 @@ int BI_subBigIntIP(BigInt * numA, const BigInt * numB){
 }
 
 void BI_modBigIntIP(BigInt * numA, const BigInt* numB){
-    
+
     const unsigned int * B = numB->digits;
     unsigned int * A = numA->digits;
     long long skipped_digits = 0;
@@ -328,15 +328,15 @@ void BI_modBigIntIP(BigInt * numA, const BigInt* numB){
 
         if (numB->num_digits < numA->num_digits){
             skipped_digits = 0;
-            unsigned int last_digit_A = A[numA->num_digits - 1]; 
-            unsigned int last_digit_B = B[numB->num_digits - 1]; 
+            unsigned int last_digit_A = A[numA->num_digits - 1];
+            unsigned int last_digit_B = B[numB->num_digits - 1];
             BI_copy(num_buffer, numB);
 
             if (last_digit_A > last_digit_B)
                 skipped_digits = numA->num_digits - numB->num_digits;
             else
                 skipped_digits = numA->num_digits - numB->num_digits - 1;
-            
+
             skipped_digits = MAX(0, skipped_digits);
             BI_shiftDigitsLeftIP(num_buffer, (size_t) skipped_digits);
             BI_subBigIntIP(numA, num_buffer);
@@ -359,15 +359,15 @@ void BI_modBigInt(BigInt * numR, const BigInt * numA, const BigInt* numB){
 
         if (numB->num_digits < numR->num_digits){
             skipped_digits = 0;
-            unsigned int last_digit_R = R[numR->num_digits - 1]; 
-            unsigned int last_digit_B = B[numB->num_digits - 1]; 
+            unsigned int last_digit_R = R[numR->num_digits - 1];
+            unsigned int last_digit_B = B[numB->num_digits - 1];
             BI_copy(num_buffer, numB);
 
             if (last_digit_R > last_digit_B)
                 skipped_digits = numR->num_digits - numB->num_digits;
             else
                 skipped_digits = numR->num_digits - numB->num_digits - 1;
-            
+
             skipped_digits = MAX(0, skipped_digits);
             BI_shiftDigitsLeftIP(num_buffer, (size_t) skipped_digits);
             BI_subBigIntIP(numR, num_buffer);
@@ -412,7 +412,7 @@ void BI_addNumberIP(BigInt * numA, const unsigned long long n){
 }
 
 void BI_shiftDigitsLeftIP(BigInt* numA, size_t s){
-    
+
     if (s == 0)
         return;
 
@@ -477,7 +477,7 @@ void BI_power(BigInt* numR, BigInt const * const numA, unsigned long long n){
 }
 
 // void BI_powerIP(const BigInt * numA, unsigned long long n){
-    
+
 //     BigInt* result = BI_construct(1);
 
 //     while(n--){
