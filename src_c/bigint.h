@@ -3,12 +3,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifndef BIGINT_H
 #define BIGINT_H
-#ifdef BIGINT_H
 
-#define BIGINT_SIZE 1024
+#define BIGINT_SIZE 1024 // Would be interesting to have dynamic allocation
 #define BIGINT_BASE 16
 
+// Temporary here to print a number in a base different than 10
 #define PRINT_BI(bi)\
     printf("Number temp_res : ");\
     for (int m = 0; m < bi->num_digits; m++){\
@@ -57,7 +58,9 @@ void BI_power(BigInt * numR, BigInt const * const numA, unsigned long long n);
 
 void BI_shiftDigitsLeftIP(BigInt* numA, size_t s);
 
-// void BI_print(const BigInt * numA);
+#if BIGINT_BASE == 10
+void BI_print(const BigInt * numA);
+#endif
 
 void BI_free(BigInt * numA);
 
