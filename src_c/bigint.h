@@ -11,8 +11,8 @@ typedef struct {
     size_t num_digits;
 } BigInt;
 
-#define BIGINT_SIZE 1024 // Would be interesting to have dynamic allocation
-#define BIGINT_BASE 16
+#define BIGINT_SIZE 2048 // Would be interesting to have dynamic allocation
+#define BIGINT_BASE 256
 
 #define MAX(a, b) ((a) < (b)) ? b : a
 #define MIN(a, b) ((a) < (b)) ? a : b
