@@ -134,7 +134,7 @@ int BI_setValueFromString(BigInt* numA, const char * str){
 
     if (str == NULL || numA == NULL)
         return -1;
-    
+
     if (strlen(str) > BIGINT_SIZE)
         return -1; // Maybe -2 so the user can understand the string too big
 
@@ -219,7 +219,7 @@ BigInt* BI_fromString(const char* str){
 
     if (strlen(str) > BIGINT_SIZE)
         return NULL;
-    
+
     BigInt * bigInt = malloc(sizeof(BigInt));
 
     if (!bigInt)
@@ -286,7 +286,7 @@ int BI_addBigIntIP(BigInt * numA, const BigInt * numB){
     if (ret != 0){
         if (numA->num_digits == BIGINT_SIZE - 1)
             return -1; // I leave the result unfinished, it's to the user to handle it with the returned code
-        
+
         A[numA->num_digits] = (unsigned int) ret;
         numA->num_digits += 1;
     }
@@ -336,10 +336,10 @@ int BI_subBigIntIP(BigInt * numA, const BigInt * numB){
 }
 
 int BI_modBigIntIP(BigInt * numA, const BigInt* numB){
-    
+
     if (numA == NULL || numB == NULL)
         return -1;
-    
+
     BI_INIT_CHECK(-1)
 
     const unsigned int * B = numB->digits;
@@ -352,7 +352,7 @@ int BI_modBigIntIP(BigInt * numA, const BigInt* numB){
 
         if (numB->num_digits < numA->num_digits){
             skipped_digits = 0;
-            unsigned int last_digit_A = A[numA->num_digits - 1]; 
+            unsigned int last_digit_A = A[numA->num_digits - 1];
             unsigned int last_digit_B = B[numB->num_digits - 1];
 
             RETURN_CODE_CHECK(BI_copy(num_buffer, numB), -1)
@@ -361,11 +361,11 @@ int BI_modBigIntIP(BigInt * numA, const BigInt* numB){
                 skipped_digits = numA->num_digits - numB->num_digits;
             else
                 skipped_digits = numA->num_digits - numB->num_digits - 1;
-            
+
             skipped_digits = MAX(0, skipped_digits);
 
             RETURN_CODE_CHECK(BI_shiftDigitsLeftIP(num_buffer, (size_t) skipped_digits), -1)
-            
+
             sub_returned_code = BI_subBigIntIP(numA, num_buffer);
 
         } else {
@@ -405,9 +405,9 @@ int BI_modBigInt(BigInt * numR, const BigInt * numA, const BigInt* numB){
                 skipped_digits = numR->num_digits - numB->num_digits;
             else
                 skipped_digits = numR->num_digits - numB->num_digits - 1;
-            
+
             skipped_digits = MAX(0, skipped_digits);
-            
+
             RETURN_CODE_CHECK(BI_shiftDigitsLeftIP(num_buffer, (size_t) skipped_digits), -1)
 
             sub_returned_code = BI_subBigIntIP(numR, num_buffer);
@@ -464,7 +464,7 @@ int BI_addNumberIP(BigInt * numA, const unsigned long long n){
 }
 
 int BI_shiftDigitsLeftIP(BigInt* numA, size_t s){
-    
+
     if (numA == NULL)
         return -1;
 
